@@ -22,8 +22,8 @@ class TinyBobNet:
     return x.dot(self.l1).relu().dot(self.l2).logsoftmax()
 
 model = TinyBobNet()
-# optim = optim.SGD([model.l1, model.l2], lr=0.01)
-optim = optim.Adam([model.l1, model.l2], lr=0.001)
+optim = optim.SGD([model.l1, model.l2], lr=0.001)
+# optim = optim.Adam([model.l1, model.l2], lr=0.001)
 
 lr = 0.01
 BS = 128
@@ -34,7 +34,8 @@ for i in (t := trange(1000)):
   x = Tensor(X_train[samp].reshape((-1, 28*28)))
   Y = Y_train[samp]
   y = np.zeros((len(samp), 10), np.float32)
-  y[range(y.shape[0]), Y] = -1.0
+  # correct loss for NLL, torch NLL loss returns one per row
+  y[range(y.shape[0]), Y] = -10.0
   y = Tensor(y)
 
   # network
