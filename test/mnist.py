@@ -1,6 +1,6 @@
 import numpy as np
 from tinyclone.tensor import Tensor
-from tinyclone.utils import fetch_mnist
+from tinyclone.utils import layer_init_uniform, fetch_mnist
 import tinyclone.optim as optim
 from tqdm import trange
 
@@ -9,14 +9,10 @@ X_train, Y_train, X_test, Y_test = fetch_mnist()
 
 # train model
 
-def layer_init(m, h):
-  ret = np.random.uniform(-1., 1., size=(m, h))/np.sqrt(m*h)
-  return ret.astype(np.float32)
-
 class TinyBobNet:
   def __init__(self):
-    self.l1 = Tensor(layer_init(784, 128))
-    self.l2 = Tensor(layer_init(128, 10))
+    self.l1 = Tensor(layer_init_uniform(784, 128))
+    self.l2 = Tensor(layer_init_uniform(128, 10))
   
   def forward(self, x):
     return x.dot(self.l1).relu().dot(self.l2).logsoftmax()
@@ -39,14 +35,14 @@ for i in (t := trange(1000)):
   y = Tensor(y)
 
   # network
-  outs = model.forward(x)
+  out = model.forward(x)
 
   # loss function
-  loss = outs.mul(y).mean()
+  loss = out.mul(y).mean()
   loss.backward()
   optim.step()
 
-  cat = np.argmax(outs.data, axis=1)
+  cat = np.argmax(out.data, axis=1)
   accuracy = (cat == Y).mean()
 
   loss = loss.data
