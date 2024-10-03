@@ -55,9 +55,6 @@ class Function:
   # note that due to how partialmethod works, self and arg are switched
   def apply(self, arg, *x):
     ctx = arg(self, *x)
-    print("self in function", self)
-    print("arg in function", arg)
-    print("ctx in function", ctx)
     ret = Tensor(arg.forward(ctx, self.data, *[t.data for t in x]))
     ret._ctx = ctx
     return ret
