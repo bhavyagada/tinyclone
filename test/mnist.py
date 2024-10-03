@@ -1,25 +1,13 @@
 import numpy as np
 from tinyclone.tensor import Tensor
+from tinyclone.nn import layer_init, SGD
+from tinyclone.utils import fetch_mnist
 from tqdm import trange
 
 # load mnist dataset
-def read(file_path, is_image=True):
-  import os
-  with open(os.path.join(os.getcwd(), "tmp", file_path), 'rb') as f:
-    data = f.read()
-    if is_image: return np.frombuffer(data[0x10:], dtype=np.uint8).reshape(-1, 28, 28)
-    else: return np.frombuffer(data[8:], dtype=np.uint8)
-
-X_train = read("train-images-idx3-ubyte")
-Y_train = read("train-labels-idx1-ubyte", is_image=False)
-X_test = read("t10k-images-idx3-ubyte")
-Y_test = read("t10k-labels-idx1-ubyte", is_image=False)
+X_train, Y_train, X_test, Y_test = fetch_mnist()
 
 # train model
-def layer_init(m, h):
-  ret = np.random.uniform(-1., 1., size=(m, h))/np.sqrt(m*h)
-  return ret.astype(np.float32)
-
 class TinyBobNet:
   def __init__(self):
     self.l1 = Tensor(layer_init(784, 128))
@@ -27,17 +15,6 @@ class TinyBobNet:
   
   def forward(self, x):
     return x.dot(self.l1).relu().dot(self.l2).logsoftmax()
-
-# optimizer
-
-class SGD:
-  def __init__(self, tensors, lr):
-    self.tensors = tensors
-    self.lr = lr
-  
-  def step(self):
-    for t in self.tensors:
-      t.data -= self.lr * t.grad
 
 model = TinyBobNet()
 optim = SGD([model.l1, model.l2], lr=0.01)
