@@ -1,13 +1,18 @@
 import numpy as np
 from tinyclone.tensor import Tensor
-from tinyclone.nn import layer_init, SGD
 from tinyclone.utils import fetch_mnist
+import tinyclone.optim as optim
 from tqdm import trange
 
 # load mnist dataset
 X_train, Y_train, X_test, Y_test = fetch_mnist()
 
 # train model
+
+def layer_init(m, h):
+  ret = np.random.uniform(-1., 1., size=(m, h))/np.sqrt(m*h)
+  return ret.astype(np.float32)
+
 class TinyBobNet:
   def __init__(self):
     self.l1 = Tensor(layer_init(784, 128))
@@ -17,7 +22,7 @@ class TinyBobNet:
     return x.dot(self.l1).relu().dot(self.l2).logsoftmax()
 
 model = TinyBobNet()
-optim = SGD([model.l1, model.l2], lr=0.01)
+optim = optim.SGD([model.l1, model.l2], lr=0.01)
 
 lr = 0.01
 BS = 128
