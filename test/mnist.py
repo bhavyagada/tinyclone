@@ -22,7 +22,8 @@ class TinyBobNet:
     return x.dot(self.l1).relu().dot(self.l2).logsoftmax()
 
 model = TinyBobNet()
-optim = optim.SGD([model.l1, model.l2], lr=0.01)
+# optim = optim.SGD([model.l1, model.l2], lr=0.01)
+optim = optim.Adam([model.l1, model.l2], lr=0.001)
 
 lr = 0.01
 BS = 128
