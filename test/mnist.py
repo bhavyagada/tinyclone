@@ -7,8 +7,7 @@ from tqdm import trange
 # load mnist dataset
 X_train, Y_train, X_test, Y_test = fetch_mnist()
 
-# train model
-
+# create a model
 class TinyBobNet:
   def __init__(self):
     self.l1 = Tensor(layer_init_uniform(784, 128))
