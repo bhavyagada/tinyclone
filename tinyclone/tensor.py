@@ -46,6 +46,10 @@ class Tensor:
         assert(False)
       t.grad = g
       t.backward(False)
+  
+  def mean(self):
+    div = Tensor(np.array([1/self.data.size]))
+    return self.sum().mul(div)
 
 class Function:
   def apply(self, arg, *x):
@@ -69,6 +73,16 @@ class Mul(Function):
     x, y = ctx.saved_tensors
     return y*grad_output, x*grad_output
 register('mul', Mul)
+
+class Add(Function):
+  @staticmethod
+  def forward(ctx, x, y):
+    return x+y
+  
+  @staticmethod
+  def backward(ctx, grad_output):
+    return grad_output, grad_output
+register('add', Add)
 
 class ReLU(Function):
   @staticmethod
@@ -102,7 +116,7 @@ class Sum(Function):
   @staticmethod
   def forward(ctx, input):
     ctx.save_for_backward(input)
-    return np.array(input.sum())
+    return np.array([input.sum()])
   
   @staticmethod
   def backward(ctx, grad_output):
@@ -119,7 +133,7 @@ class LogSoftmax(Function):
     output = input - logsumexp(input).reshape((-1, 1))
     ctx.save_for_backward(output)
     return output
-  
+
   @staticmethod
   def backward(ctx, grad_output):
     output, = ctx.saved_tensors

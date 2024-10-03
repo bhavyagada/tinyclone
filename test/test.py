@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from tensor import Tensor
+from tinyclone.tensor import Tensor
 
 np.set_printoptions(precision=3)
 x_init = np.random.randn(1,3).astype(np.float32)
@@ -15,7 +15,8 @@ def test_tinyclone():
   outr = out.relu()
   outl = outr.logsoftmax()
   outm = outl.mul(m)
-  outx = outm.sum()
+  outa = outm.add(m)
+  outx = outa.sum()
   outx.backward()
   return outx.data, x.grad, W.grad
 
@@ -27,7 +28,8 @@ def test_pytorch():
   outr = out.relu()
   outl = torch.nn.functional.log_softmax(outr, dim=1)
   outm = outl.mul(m)
-  outx = outm.sum()
+  outa = outm.add(m)
+  outx = outa.sum()
   outx.backward()
   return outx.detach().numpy(), x.grad, W.grad
 
