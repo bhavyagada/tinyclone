@@ -153,13 +153,12 @@ class Conv2d(Function):
   def forward(ctx, x, w):
     cout,cin,H,W = w.shape
     ret = np.zeros((x.shape[0], cout, x.shape[2]-(H-1), x.shape[3]-(W-1)), dtype=w.dtype)
-    for Y in range(ret.shape[2]):
-      for X in range(ret.shape[3]):
-        for i in range(H):
-          for j in range(W):
-            tx = x[:, :, Y+j, X+i]
-            tw = w[:, :, j, i]
-            ret[:, :, Y, X] += tx.dot(tw.T)
+    for i in range(H):
+      for j in range(W):
+        tw = w[:, :, j, i]
+        for Y in range(ret.shape[2]):
+          for X in range(ret.shape[3]):
+            ret[:, :, Y, X] += x[:, :, Y+j, X+i].dot(tw.T)
     return ret
   
   @staticmethod
