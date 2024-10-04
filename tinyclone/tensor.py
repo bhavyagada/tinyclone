@@ -1,6 +1,11 @@
 from functools import partialmethod
 import numpy as np
-from numba import jit, float32
+
+# optional jit
+try:
+  from numba import jit
+except ImportError:
+  jit = lambda x: x
 
 # **** start with two base classes ****
 
@@ -165,42 +170,43 @@ class LogSoftmax(Function):
     return grad_output - np.exp(output)*grad_output.sum(axis=1).reshape((-1, 1))
 register('logsoftmax', LogSoftmax)
 
-@jit(nopython=True)
-def conv2d_inner_forward(x, w):
-  cout,cin,H,W = w.shape
-  ret = np.zeros((x.shape[0], cout, x.shape[2]-(H-1), x.shape[3]-(W-1)), dtype=w.dtype)
-  for i in range(H):
-    for j in range(W):
-      tw = w[:, :, j, i]
-      for Y in range(ret.shape[2]):
-        for X in range(ret.shape[3]):
-          ret[:, :, Y, X] += x[:, :, Y+j, X+i].dot(tw.T)
-  return ret
-
-@jit(nopython=True)
-def conv2d_inner_backward(grad_output, x, w):
-  dx = np.zeros_like(x)
-  dw = np.zeros_like(w)
-  cout,cin,H,W = w.shape
-  for i in range(H):
-    for j in range(W):
-      tw = w[:, :, j, i]
-      for Y in range(grad_output.shape[2]):
-        for X in range(grad_output.shape[3]):
-          gg = grad_output[:, :, Y, X]
-          tx = x[:, :, Y+j, X+i]
-          dx[:, :, Y+j, X+i] += gg.dot(tw)
-          dw[:, :, j, i] += gg.T.dot(tx)
-  return dx, dw
-
 class Conv2d(Function):
+  @staticmethod
+  @jit
+  def inner_forward(x, w):
+    cout,cin,H,W = w.shape
+    ret = np.zeros((x.shape[0], cout, x.shape[2]-(H-1), x.shape[3]-(W-1)), dtype=w.dtype)
+    for i in range(H):
+      for j in range(W):
+        tw = w[:, :, j, i]
+        for Y in range(ret.shape[2]):
+          for X in range(ret.shape[3]):
+            ret[:, :, Y, X] += x[:, :, Y+j, X+i].dot(tw.T)
+    return ret
+
+  @staticmethod
+  @jit
+  def inner_backward(grad_output, x, w):
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    cout,cin,H,W = w.shape
+    for i in range(H):
+      for j in range(W):
+        tw = w[:, :, j, i]
+        for Y in range(grad_output.shape[2]):
+          for X in range(grad_output.shape[3]):
+            gg = grad_output[:, :, Y, X]
+            tx = x[:, :, Y+j, X+i]
+            dx[:, :, Y+j, X+i] += gg.dot(tw)
+            dw[:, :, j, i] += gg.T.dot(tx)
+    return dx, dw
+
   @staticmethod
   def forward(ctx, x, w):
     ctx.save_for_backward(x, w)
-    return conv2d_inner_forward(x, w)
+    return Conv2d.inner_forward(x, w)
   
   @staticmethod
   def backward(ctx, grad_output):
-    return conv2d_inner_backward(grad_output, *ctx.saved_tensors)
-    
+    return Conv2d.inner_backward(grad_output, *ctx.saved_tensors)
 register('conv2d', Conv2d)
